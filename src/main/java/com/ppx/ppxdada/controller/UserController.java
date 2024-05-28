@@ -9,32 +9,20 @@ import com.ppx.ppxdada.common.ResultUtils;
 import com.ppx.ppxdada.constant.UserConstant;
 import com.ppx.ppxdada.exception.BusinessException;
 import com.ppx.ppxdada.exception.ThrowUtils;
-import com.ppx.ppxdada.model.dto.user.UserAddRequest;
-import com.ppx.ppxdada.model.dto.user.UserLoginRequest;
-import com.ppx.ppxdada.model.dto.user.UserQueryRequest;
-import com.ppx.ppxdada.model.dto.user.UserRegisterRequest;
-import com.ppx.ppxdada.model.dto.user.UserUpdateMyRequest;
-import com.ppx.ppxdada.model.dto.user.UserUpdateRequest;
+import com.ppx.ppxdada.model.dto.user.*;
 import com.ppx.ppxdada.model.entity.User;
 import com.ppx.ppxdada.model.vo.LoginUserVO;
 import com.ppx.ppxdada.model.vo.UserVO;
 import com.ppx.ppxdada.service.UserService;
-
-import java.util.List;
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.DigestUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 import static com.ppx.ppxdada.service.impl.UserServiceImpl.SALT;
 
