@@ -14,9 +14,14 @@ import com.ppx.ppxdada.model.dto.userAnswer.UserAnswerAddRequest;
 import com.ppx.ppxdada.model.dto.userAnswer.UserAnswerEditRequest;
 import com.ppx.ppxdada.model.dto.userAnswer.UserAnswerQueryRequest;
 import com.ppx.ppxdada.model.dto.userAnswer.UserAnswerUpdateRequest;
+import com.ppx.ppxdada.model.entity.App;
+import com.ppx.ppxdada.model.entity.ScoringResult;
 import com.ppx.ppxdada.model.entity.User;
 import com.ppx.ppxdada.model.entity.UserAnswer;
+import com.ppx.ppxdada.model.enums.ReviewStatusEnum;
 import com.ppx.ppxdada.model.vo.UserAnswerVO;
+import com.ppx.ppxdada.scoring.ScoringStrategyExecutor;
+import com.ppx.ppxdada.service.AppService;
 import com.ppx.ppxdada.service.UserAnswerService;
 import com.ppx.ppxdada.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 用户答案接口
@@ -42,7 +48,13 @@ public class UserAnswerController {
     private UserAnswerService userAnswerService;
 
     @Resource
+    private AppService appService;
+
+    @Resource
     private UserService userService;
+
+    @Resource
+    private ScoringStrategyExecutor scoringStrategyExecutor;
 
     // region 增删改查
 
@@ -59,10 +71,19 @@ public class UserAnswerController {
         // 在此处将实体类和 DTO 进行转换
         UserAnswer userAnswer = new UserAnswer();
         BeanUtils.copyProperties(userAnswerAddRequest, userAnswer);
-        List<String> resultProp = userAnswerAddRequest.getChoices();
-        userAnswer.setChoices(JSONUtil.toJsonStr(resultProp));
+        List<String> choices = userAnswerAddRequest.getChoices();
+        userAnswer.setChoices(JSONUtil.toJsonStr(choices));
         // 数据校验
         userAnswerService.validUserAnswer(userAnswer, true);
+        // 判断app是否存在
+        Long appId = userAnswerAddRequest.getAppId();
+        App app = appService.getById(appId);
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
+        // 未过审不能做题
+        if(!Objects.equals(ReviewStatusEnum.getEnumByValue(app.getReviewStatus()), ReviewStatusEnum.PASS)){
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "该app未过审，不能做题");
+        }
+
         // 填充默认值
         User loginUser = userService.getLoginUser(request);
         userAnswer.setUserId(loginUser.getId());
@@ -71,6 +92,16 @@ public class UserAnswerController {
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         // 返回新写入的数据 id
         long newUserAnswerId = userAnswer.getId();
+
+        // 调用评分模块
+        try {
+            UserAnswer userAnswerWithResult = scoringStrategyExecutor.doScore(choices, app);
+            userAnswerWithResult.setId(newUserAnswerId);
+            userAnswerService.updateById(userAnswerWithResult);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "评分错误");
+        }
         return ResultUtils.success(newUserAnswerId);
     }
 
