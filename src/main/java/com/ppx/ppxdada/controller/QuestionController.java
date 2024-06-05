@@ -10,10 +10,14 @@ import com.ppx.ppxdada.common.ResultUtils;
 import com.ppx.ppxdada.constant.UserConstant;
 import com.ppx.ppxdada.exception.BusinessException;
 import com.ppx.ppxdada.exception.ThrowUtils;
+import com.ppx.ppxdada.manager.AiManager;
 import com.ppx.ppxdada.model.dto.question.*;
+import com.ppx.ppxdada.model.entity.App;
 import com.ppx.ppxdada.model.entity.Question;
 import com.ppx.ppxdada.model.entity.User;
+import com.ppx.ppxdada.model.enums.AppTypeEnum;
 import com.ppx.ppxdada.model.vo.QuestionVO;
+import com.ppx.ppxdada.service.AppService;
 import com.ppx.ppxdada.service.QuestionService;
 import com.ppx.ppxdada.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +44,12 @@ public class QuestionController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private AiManager aiManager;
+
+    @Resource
+    private AppService appService;
 
     // region 增删改查
 
@@ -218,7 +228,7 @@ public class QuestionController {
         if (questionEditRequest == null || questionEditRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        // todo 在此处将实体类和 DTO 进行转换
+        // 在此处将实体类和 DTO 进行转换
         Question question = new Question();
         BeanUtils.copyProperties(questionEditRequest, question);
         List<QuestionContentDTO> questionContentDTO = questionEditRequest.getQuestionContent();
@@ -241,4 +251,76 @@ public class QuestionController {
     }
 
     // endregion
+
+    // region AI 生成
+    private static final String GENERATE_QUESTION_SYSTEM_MESSAGE = "你是一位严谨的出题专家，我会给你如下信息：\n" +
+            "```\n" +
+            "名称，\n" +
+            "【【【描述】】】，\n" +
+            "类别，\n" +
+            "要生成的题目数，\n" +
+            "每个题目的选项数\n" +
+            "```\n" +
+            "\n" +
+            "请你根据上述信息，通过名称和描述，按照以下步骤来出相关题目：\n" +
+            "1. 要求：选项尽可能地短，题目不要包含序号，每题的选项数以我提供的为主，题目不能重复\n" +
+            "2. 严格按照下面的 json 格式输出题目和选项\n" +
+            "```\n" +
+            "[{\"options\":[{\"value\":\"选项\",\"key\":\"A\"},{\"value\":\"\",\"key\":\"B\"}],\"title\":\"题目\"}]\n" +
+            "```\n" +
+            "title 是题目，options 是选项，每个选项的 key 按照英文字母序（比如 A、B、C、D）以此类推，value 是选项\n" +
+            "3. 检查题目是否包含序号，若包含序号则去除序号\n" +
+            "4. 返回的题目列表格式必须为 JSON 数组";
+
+    /**
+     * 生成题目的用户消息
+     * @param app
+     * @param questionNumber
+     * @param optionNumber
+     * @return
+     */
+    private String getGenerateQuestionUserMessage(App app, int questionNumber, int optionNumber) {
+        /*
+          小学数学测验，
+          【【【小学三年级的数学题】】】，
+          得分类，
+          10，
+          3
+         */
+        StringBuilder userMessage = new StringBuilder();
+        userMessage.append(app.getAppName()).append("\n");
+        userMessage.append(app.getAppDesc()).append("\n");
+        userMessage.append(AppTypeEnum.getEnumByValue(app.getAppType()).getText() + "类").append("\n");
+        userMessage.append(questionNumber).append("\n");
+        userMessage.append(optionNumber);
+        return userMessage.toString();
+    }
+
+    @PostMapping("/ai_generate")
+    public BaseResponse<List<QuestionContentDTO>> aiGenerateQuestion(@RequestBody AiGenerateQuestionRequest aiGenerateQuestionRequest) {
+        // 不能为空
+        ThrowUtils.throwIf(aiGenerateQuestionRequest == null, ErrorCode.PARAMS_ERROR);
+        // 获取参数
+        Long appId = aiGenerateQuestionRequest.getAppId();
+        int questionNumber = aiGenerateQuestionRequest.getQuestionNumber();
+        int optionNumber = aiGenerateQuestionRequest.getOptionNumber();
+        App app = appService.getById(appId);
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
+        // 封装 Prompt
+        String userMessage = getGenerateQuestionUserMessage(app, questionNumber, optionNumber);
+        // AI 生成
+        String result = aiManager.doSyncRequest(GENERATE_QUESTION_SYSTEM_MESSAGE, userMessage, null);
+        // 结果处理
+        int start = result.indexOf("[");
+        int end = result.lastIndexOf("]");
+        String json = result.substring(start, end + 1);
+        // 转换为 DTO
+        List<QuestionContentDTO> questionContentDTOList = JSONUtil.toList(json, QuestionContentDTO.class);
+        return ResultUtils.success(questionContentDTOList);
+    }
+
+
+    // endregion
+
+
 }

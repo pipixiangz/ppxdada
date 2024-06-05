@@ -64,7 +64,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         if (add) {
             // 补充校验规则
             ThrowUtils.throwIf(StringUtils.isBlank(questionContent), ErrorCode.PARAMS_ERROR, "题目内容不能为空");
-            ThrowUtils.throwIf(questionContent.length() > 200, ErrorCode.PARAMS_ERROR, "题目内容过长");
+            ThrowUtils.throwIf(questionContent.length() > 1024, ErrorCode.PARAMS_ERROR, "题目内容过长");
             ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用id非法");
 
         }

@@ -18,7 +18,6 @@ spring:
     # 30 天过期
     timeout: 2592000
   # 数据库配置
-  # todo 需替换配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/ppxdada
@@ -77,3 +76,6 @@ knife4j:
         api-rule: package
         api-rule-resources:
           - com.ppx.ppxdada.controller
+# AI 配置
+ai:
+  apiKey: 5282b0005f3107abcff252c0215133b2.wcQEe9WxzhJjxoXV
