@@ -24,13 +24,13 @@ spring:
     username: root
     password: 085258
   # Redis 配置
-  # todo 需替换配置，然后取消注释
-#  redis:
-#    database: 1
-#    host: localhost
-#    port: 6379
-#    timeout: 5000
+  redis:
+    database: 1
+    host: localhost
+    port: 6379
+    timeout: 5000
 #    password: 123456
+
   # Elasticsearch 配置
 
   # 文件上传
@@ -38,6 +38,41 @@ spring:
     multipart:
       # 大小限制
       max-file-size: 10MB
+
+  # 分库分表配置
+  shardingsphere:
+    # 数据源配置
+    datasource:
+      # 多数据源以逗号隔开即可
+      names: ppxdada
+      ppxdada:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: jdbc:mysql://localhost:3306/ppxdada?allowPublicKeyRetrieval=true&useSSL=false&autoReconnect=true&characterEncoding=utf8
+        username: root
+        password: 085258
+    # 规则配置
+    rules:
+      sharding:
+        # 分片(分表)算法配置
+        sharding-algorithms:
+          # 自定义分片(分表)规则名
+          answer-table-inline:
+            ## inline 类型是简单的配置文件里面就能写的类型，其他还有自定义类等等
+            type: INLINE
+            props:
+              # 分表策略 0/1
+              algorithm-expression: user_answer_$->{appId % 2}
+        tables:
+          user_answer: # 原表名
+            actual-data-nodes: ppxdada.user_answer_$->{0..1}
+            # 分表策略
+            table-strategy:
+              standard:
+                sharding-column: appId
+                # 上面的算法名
+                sharding-algorithm-name: answer-table-inline
+
 server:
   address: 0.0.0.0
   port: 8101

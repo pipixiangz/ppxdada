@@ -5,10 +5,8 @@ import com.ppx.ppxdada.common.ErrorCode;
 import com.ppx.ppxdada.exception.BusinessException;
 import com.zhipu.oapi.ClientV4;
 import com.zhipu.oapi.Constants;
-import com.zhipu.oapi.service.v4.model.ChatCompletionRequest;
-import com.zhipu.oapi.service.v4.model.ChatMessage;
-import com.zhipu.oapi.service.v4.model.ChatMessageRole;
-import com.zhipu.oapi.service.v4.model.ModelApiResponse;
+import com.zhipu.oapi.service.v4.model.*;
+import io.reactivex.Flowable;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -110,6 +108,54 @@ public class AiManager {
             // 结果
             ChatMessage result = invokeModelApiResp.getData().getChoices().get(0).getMessage();
             return result.getContent().toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, e.getMessage());
+        }
+    }
+
+
+    /**
+     * 通用流式请求, 简化消息传递
+     *
+     * @param systemMessage
+     * @param userMessage
+     * @param temperature
+     * @return
+     */
+    public Flowable<ModelData> doStreamRequest(String systemMessage, String userMessage, Float temperature) {
+        List<ChatMessage> messages = new ArrayList<>();
+        // 系统消息
+        ChatMessage systemChatMessage = new ChatMessage(ChatMessageRole.SYSTEM.value(), systemMessage);
+        messages.add(systemChatMessage);
+        // 用户消息
+        ChatMessage userChatMessage = new ChatMessage(ChatMessageRole.USER.value(), userMessage);
+        messages.add(userChatMessage);
+
+        return doStreamRequest(messages, temperature);
+    }
+
+    /**
+     * 流式请求
+     *
+     * @param messages
+     * @param temperature
+     * @return
+     */
+    public Flowable<ModelData> doStreamRequest(List<ChatMessage> messages, Float temperature) {
+        // 构造请求
+        ChatCompletionRequest chatCompletionRequest = ChatCompletionRequest.builder()
+                .model(Constants.ModelChatGLM4)
+                .stream(Boolean.TRUE) // 是否是流式对话，TRUE的意思是一边写一边返回
+                .invokeMethod(Constants.invokeMethod)
+                .temperature(temperature)
+                .messages(messages)
+                .build();
+        try {
+            // 调用
+            ModelApiResponse invokeModelApiResp = clientV4.invokeModelApi(chatCompletionRequest);
+            // 返回Flowable对象
+            return invokeModelApiResp.getFlowable();
         } catch (Exception e) {
             e.printStackTrace();
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, e.getMessage());

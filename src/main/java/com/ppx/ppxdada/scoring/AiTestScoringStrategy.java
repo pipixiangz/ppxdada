@@ -1,7 +1,10 @@
 package com.ppx.ppxdada.scoring;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.ppx.ppxdada.manager.AiManager;
 import com.ppx.ppxdada.model.dto.question.QuestionAnswerDTO;
 import com.ppx.ppxdada.model.dto.question.QuestionContentDTO;
@@ -12,12 +15,16 @@ import com.ppx.ppxdada.model.entity.UserAnswer;
 import com.ppx.ppxdada.model.vo.QuestionVO;
 import com.ppx.ppxdada.service.QuestionService;
 import com.ppx.ppxdada.service.ScoringResultService;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * AI 测评类应用评分策略
@@ -30,6 +37,26 @@ public class AiTestScoringStrategy implements ScoringStrategy {
 
     @Resource
     private AiManager aiManager;
+
+    @Resource
+    private RedissonClient redissonClient;
+
+    // 分布式锁的key
+    // 每个业务对应一把锁， 所有的线程抢一把锁
+    private static final String AI_ANSWER_LOCK = "AI_ANSWER_LOCK";
+
+
+    /**
+     * AI 评分结果本地缓存 （只属于这个类）
+     */
+    private final Cache<String, String> answerCacheMap =
+            Caffeine.newBuilder()
+                    // 设置初始容量为 1024 个条目
+                    .initialCapacity(1024)
+                    // 配置缓存项在最后一次访问后 5 分钟移除
+                    .expireAfterAccess(5L, TimeUnit.MINUTES)
+                    // 构建缓存实例
+                    .build();
 
     /**
      * AI 评分系统消息
@@ -74,6 +101,7 @@ public class AiTestScoringStrategy implements ScoringStrategy {
 
     /**
      * 评分
+     *
      * @param choices
      * @param app
      * @return
@@ -81,30 +109,84 @@ public class AiTestScoringStrategy implements ScoringStrategy {
      */
     @Override
     public UserAnswer doScore(List<String> choices, App app) throws Exception {
+
         Long appId = app.getId();
-        // 1. 根据 id 查询到题目
-        // 这段代码在功能上与 SQL 查询是类似的，只不过它通过 MyBatis-Plus 提供的查询构建器来实现，而不是直接编写 SQL 语句
-        // SELECT * FROM Question WHERE app_id = {appId} LIMIT 1;
-        Question question = questionService.getOne(
-                Wrappers.lambdaQuery(Question.class).eq(Question::getAppId, appId)
-        );
-        QuestionVO questionVO = QuestionVO.objToVo(question);
-        List<QuestionContentDTO> questionContent = questionVO.getQuestionContent();
-        // 2. 调用 AI 获取结果
-        // 封装 Prompt
-        String userMessage = getAiTestScoringUserMessage(app, questionContent, choices);
-        // AI 生成
-        String result = aiManager.doSyncStableRequest(AI_TEST_SCORING_SYSTEM_MESSAGE, userMessage);
-        // 截取结果处理
-        int start = result.indexOf("{");
-        int end = result.lastIndexOf("}");
-        String json = result.substring(start, end + 1);
-        // 3. 构造返回值，填充答案对象的属性
-        UserAnswer userAnswer = JSONUtil.toBean(json, UserAnswer.class);
-        userAnswer.setAppId(appId);
-        userAnswer.setAppType(app.getAppType());
-        userAnswer.setScoringStrategy(app.getScoringStrategy());
-        userAnswer.setChoices(JSONUtil.toJsonStr(choices));
-        return userAnswer;
+
+        // 0. 从缓存中获取评分结果
+        String jsonStr = JSONUtil.toJsonStr(choices);
+        String cacheKey = buildCacheKey(appId, jsonStr);
+        String answerJson = answerCacheMap.getIfPresent(cacheKey);
+            // 命中缓存则直接返回结果
+        if (StrUtil.isNotBlank(answerJson)) {
+            UserAnswer userAnswer = JSONUtil.toBean(answerJson, UserAnswer.class);
+            userAnswer.setAppId(appId);
+            userAnswer.setAppType(app.getAppType());
+            userAnswer.setScoringStrategy(app.getScoringStrategy());
+            userAnswer.setChoices(jsonStr);
+            return userAnswer;
+        }
+
+        // 分布式锁
+        RLock lock = redissonClient.getLock(AI_ANSWER_LOCK + cacheKey);
+        try {
+            // 竞争分布式锁，等待 3 秒，15 秒自动释放
+            boolean res = lock.tryLock(3, 15, TimeUnit.SECONDS);
+            if (!res){
+
+                return null;
+            }
+            // 抢到锁的业务才能执行 AI 调用
+            // 1. 根据 id 查询到题目
+            // 这段代码在功能上与 SQL 查询是类似的，只不过它通过 MyBatis-Plus 提供的查询构建器来实现，而不是直接编写 SQL 语句
+            // SELECT * FROM Question WHERE app_id = {appId} LIMIT 1;
+            Question question = questionService.getOne(
+                    Wrappers.lambdaQuery(Question.class).eq(Question::getAppId, appId)
+            );
+            QuestionVO questionVO = QuestionVO.objToVo(question);
+            List<QuestionContentDTO> questionContent = questionVO.getQuestionContent();
+
+            // 2. 调用 AI 获取结果
+            // 封装 Prompt
+            String userMessage = getAiTestScoringUserMessage(app, questionContent, choices);
+            // AI 生成
+            String result = aiManager.doSyncStableRequest(AI_TEST_SCORING_SYSTEM_MESSAGE, userMessage);
+            // 截取结果处理
+            int start = result.indexOf("{");
+            int end = result.lastIndexOf("}");
+            String json = result.substring(start, end + 1);
+
+            // 3. 缓存结果
+            answerCacheMap.put(cacheKey, json);
+
+            // 4. 构造返回值，填充答案对象的属性
+            UserAnswer userAnswer = JSONUtil.toBean(json, UserAnswer.class);
+            userAnswer.setAppId(appId);
+            userAnswer.setAppType(app.getAppType());
+            userAnswer.setScoringStrategy(app.getScoringStrategy());
+            userAnswer.setChoices(jsonStr);
+            return userAnswer;
+
+        } finally {
+            // 释放锁
+            if (lock != null && lock.isLocked()) {
+                // 判断是否是当前线程持有锁（只有本人能释放）
+                if(lock.isHeldByCurrentThread()) {
+                    lock.unlock();
+                }
+            }
+        }
+
+
+    }
+
+    /**
+     * 构建缓存key
+     *
+     * @param appId
+     * @param choices
+     * @return
+     */
+    private String buildCacheKey(Long appId, String choices) {
+        return DigestUtils.md5Hex(appId + ":" + choices);
     }
 }
