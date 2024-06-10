@@ -55,10 +55,12 @@
 ![image](https://github.com/pipixiangz/ppxdada/blob/main/img/homepage.jpg)
 
 ![image](https://github.com/pipixiangz/ppxdada/blob/main/img/UserManagement.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/AnswerManagement.jpg)
+
 ![image](https://github.com/pipixiangz/ppxdada/blob/main/img/answer.jpg)
 ![image](https://github.com/pipixiangz/ppxdada/blob/main/img/createQuestions.jpg)
 ![image](https://github.com/pipixiangz/ppxdada/blob/main/img/createApps.jpg)
+![image](https://github.com/pipixiangz/ppxdada/blob/main/img/AppManagement.jpg)
+![image](https://github.com/pipixiangz/ppxdada/blob/main/img/AnswerManagement.jpg)
 ![image](https://github.com/pipixiangz/ppxdada/blob/main/img/MyAnswers.jpg)
 ![image](https://github.com/pipixiangz/ppxdada/blob/main/img/questionManagement.jpg)
 ![image](https://github.com/pipixiangz/ppxdada/blob/main/img/scoringManagement.jpg)
