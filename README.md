@@ -1,7 +1,9 @@
 ## ppxdada_backend
 
-### 项目描述
+### 项目描述 (Project Description)
 开发了一个基于 Spring Boot、Redis、ChatGLM、RxJava、SSE、Vue3、Arco Design 和 Pinia 的 AI 答题应用平台。用户可以通过 AI 快速生成题目并制作应用，管理员审核后，用户可以在线答题，并根据多种评分算法或 AI 得到回答总结。管理员还可以集中管理全站内容并进行统计分析。
+
+An AI quiz application platform was developed using Spring Boot, Redis, ChatGLM, RxJava, SSE, Vue3, Arco Design, and Pinia. Users can quickly generate questions and create applications through AI. After administrator approval, users can take quizzes online and receive summarized answers based on various scoring algorithms or AI. Administrators can centrally manage site content and perform statistical analysis.
 
 ### 库表设计
 
@@ -65,3 +67,41 @@
 ![image](https://github.com/pipixiangz/ppxdada/blob/main/img/questionManagement.jpg)
 ![image](https://github.com/pipixiangz/ppxdada/blob/main/img/scoringManagement.jpg)
 ![image](https://github.com/pipixiangz/ppxdada/blob/main/img/Statistics.jpg)
+
+
+
+### Database Design
+Designed table structures for users, applications, questions, scoring results, and user responses based on business requirements. The questions table uses JSON format to store complex nested questions and options, facilitating maintenance and expansion. An appId index was added to improve retrieval performance.
+
+### Scoring Module
+Implemented various user response scoring algorithms (e.g., statistical scores, AI scoring) using the strategy pattern. A global executor scans custom annotations on strategy classes and selects the appropriate strategy, enhancing system scalability.
+
+### General AI Service
+Encapsulated a general AI service based on ChatGLM. The service reads key configurations through configuration classes and initializes AI client beans for global use.
+
+### File Management Service
+Encapsulated a general file management service based on Tencent Cloud COS. The service reads key configurations through configuration classes and initializes COS client beans for global use.
+
+### AI-Generated Questions
+Optimized prompts (e.g., system presets, few-shot learning, task decomposition) to make AI return question content in JSON format for backend processing. Due to the slow AI question generation, ChatGLM's streaming API was selected, and questions were pushed to the frontend in real-time using SSE to improve user experience.
+
+### Asynchronous Data Stream Processing
+Processed AI asynchronous data streams using RxJava's operator chain calls. Used map to retrieve and process strings, filter to remove null values, and flatMap to map strings to individual characters. Then, concatenated single questions using a bracket balancing algorithm, resulting in clear and concise logic.
+
+### Duplicate Submission Prevention
+Used a snowflake algorithm to assign a unique ID to each quiz attempt and implemented idempotent design through database primary keys to prevent users from submitting duplicate answers, avoiding duplicate data generation.
+
+### Cache Optimization
+Used Caffeine for local caching of AI scoring results corresponding to answer hashes, improving scoring performance (from 10 seconds to 5 milliseconds). Solved cache penetration issues using Redisson distributed locks.
+
+### Table Sharding Design
+To handle the growth in user quiz attempts, configured modulo sharding algorithms based on Sharding JDBC to shard user quiz records by application ID, improving single-table query performance and scalability.
+
+### Thread Pool Optimization
+Due to limited server resources, created an isolated thread pool with a larger core thread count for members to ensure that ordinary users do not affect members' AI usage experience.
+
+### Statistical Analysis
+Performed statistical analysis of popular applications and answer distributions using custom SQL with MyBatis annotations on the backend. Visualized data on the frontend using ECharts.
+
+### API Documentation
+Automatically generated backend API documentation using Knife4j and Swagger. Supplemented interface descriptions by writing ApiOperation and other annotations, avoiding the hassle of manually writing and maintaining documentation.
