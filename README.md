@@ -57,21 +57,20 @@ An AI quiz application platform was developed using Spring Boot, Redis, ChatGLM,
 
 使用 Knife4j 和 Swagger 自动生成后端接口文档，并通过编写 ApiOperation 等注解补充接口说明，避免了手动编写和维护文档的麻烦。
 
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/homepage.jpg)
 
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/homepage.jpg)
-
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/UserManagement.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/appDetails.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/answer.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/createQuestions.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/createApps.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/AppManagement.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/AnswerManagement.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/MyAnswers.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/questionManagement.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/scoringManagement.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/Statistics.jpg)
-
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/UserManagement.jpg)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/AppManagement.jpg)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/appDetails.jpg)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/answer.jpg)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/createQuestions.jpg)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/createApps.jpg)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/MyAnswers.jpg)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/AnswerManagement.jpg)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/questionManagement.jpg)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/scoringManagement.jpg)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/Statistics.jpg)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/About.jpg)
 
 
 ### Database Design
