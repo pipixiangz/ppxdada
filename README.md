@@ -2,7 +2,7 @@
 
 ### 项目描述 (Project Description)
 
-https://ppxdada-online.vercel.app/
+http://ppxdada.online
 
 
 开发了一个基于 Spring Boot、Redis、ChatGLM、RxJava、SSE、Vue3、Arco Design 和 Pinia 的 AI 答题应用平台。用户可以通过 AI 快速生成题目并制作应用，管理员审核后，用户可以在线答题，并根据多种评分算法或 AI 得到回答总结。管理员还可以集中管理全站内容并进行统计分析。
