@@ -1,6 +1,10 @@
 ## ppxdada_backend
 
 ### 项目描述 (Project Description)
+
+已部署上线：https://ppxdada.online
+
+
 开发了一个基于 Spring Boot、Redis、ChatGLM、RxJava、SSE、Vue3、Arco Design 和 Pinia 的 AI 答题应用平台。用户可以通过 AI 快速生成题目并制作应用，管理员审核后，用户可以在线答题，并根据多种评分算法或 AI 得到回答总结。管理员还可以集中管理全站内容并进行统计分析。
 
 An AI quiz application platform was developed using Spring Boot, Redis, ChatGLM, RxJava, SSE, Vue3, Arco Design, and Pinia. Users can quickly generate questions and create applications through AI. After administrator approval, users can take quizzes online and receive summarized answers based on various scoring algorithms or AI. Administrators can centrally manage site content and perform statistical analysis.
@@ -53,22 +57,21 @@ An AI quiz application platform was developed using Spring Boot, Redis, ChatGLM,
 
 使用 Knife4j 和 Swagger 自动生成后端接口文档，并通过编写 ApiOperation 等注解补充接口说明，避免了手动编写和维护文档的麻烦。
 
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/homepage.png)
 
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/homepage.jpg)
-
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/UserManagement.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/appDetails.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/answer.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/createQuestions.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/createApps.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/AppManagement.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/AnswerManagement.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/MyAnswers.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/questionManagement.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/scoringManagement.jpg)
-![image](https://github.com/pipixiangz/ppxdada/blob/main/img/Statistics.jpg)
-
-
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/userManagement.png)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/appManagement.png)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/appDetails.png)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/answer.png)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/createQuestions.png)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/createApps.png)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/MyAnswers.png)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/answerManagement.png)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/questionManagement.png)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/scoringManagement.png)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/Statistics.png)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/About.png)
+![image](https://github.com/pipixiangz/ppxdada-frontend/blob/main/img/loginPage.png)
 
 ### Database Design
 Designed table structures for users, applications, questions, scoring results, and user responses based on business requirements. The questions table uses JSON format to store complex nested questions and options, facilitating maintenance and expansion. An appId index was added to improve retrieval performance.
